@@ -32,6 +32,9 @@ android {
 }
 
 dependencies {
+    implementation(libs.bundles.ktor)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+
     implementation(libs.androidx.activity.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.constraintlayout)
