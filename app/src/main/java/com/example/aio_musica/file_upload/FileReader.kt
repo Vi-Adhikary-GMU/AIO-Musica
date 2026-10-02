@@ -20,7 +20,7 @@ class FileReader(
         return withContext(ioDispatcher) {
             val bytes = context.contentResolver.openInputStream(contentUri)?.use { inputStream -> inputStream.readBytes() } ?: byteArrayOf() // Handles null case
 
-            val fileName = UUID.randomUUID().toString()
+            val fileName = UUID.randomUUID().toString() // TODO: This generates a random file name. It's expected that the backend will resolve this and give the file it's own name when it is uploaded, but we can change this if needed.
             val mimeType = context.contentResolver.getType(contentUri) ?: ""
 
             FileInfo(
