@@ -26,6 +26,7 @@ class FileRepository (
         httpClient.submitFormWithBinaryData(
             url = "https://dlptest.com/https-post/", // TODO: This uses a test website, we need to replace this with our own actual backend
             formData = formData {
+                append("description", "Test") //TODO: This is the specification for the test website. Once we implement our own backend the specifications will probably change.
                 append("the_file", info.bytes, Headers.build {
                     append(HttpHeaders.ContentType, info.mimeType)
                     append(HttpHeaders.ContentDisposition, "filename=${info.name}")
