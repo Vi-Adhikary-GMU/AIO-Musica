@@ -50,5 +50,46 @@ fun toggleMute(isMuted: Boolean): Boolean {
     return !isMuted
 }
 
+class TestValidationFileUpload {
+    @Test
+    fun testFileAcceptsMp3() {
+        assertTrue(validateFileUpload("song.mp3"))
+    }
 
+    @Test
+    fun testFileAcceptsUppercaseMp3() {
+        assertTrue(validateFileUpload("song.MP3"))
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun testFileDeniesOtherExtension() {
+        validateFileUpload("song.wav")
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun testFileDeniesEmptyFile() {
+        validateFileUpload("")
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun testFileMissingExtension() {
+        validateFileUpload("song")
+    }
+}
+
+/**
+ * Checks whether a filename is a valid MP3 upload
+ * @param fileName is the name of the selected file chosen by the user
+ * @throws IllegalArgumentException if the filename is empty or if the file does not end in .mp3
+ * @return true if the filename ends in .mp3
+ */
+fun validateFileUpload(fileName: String): Boolean {
+    if (fileName.isBlank()) {
+        throw IllegalArgumentException("File cannot be empty")
+    }
+    if (!fileName.lowercase().endsWith(".mp3")) {
+        throw IllegalArgumentException("Only mp3 files are supported")
+    }
+    return true
+}
 
