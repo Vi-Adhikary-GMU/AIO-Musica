@@ -78,7 +78,7 @@ class TestValidationFileUpload {
 }
 
 /**
- * Checks whether a filename is a valid MP3 upload
+ * Function checks whether a filename is a valid MP3 upload by the user
  * @param fileName is the name of the selected file chosen by the user
  * @throws IllegalArgumentException if the filename is empty or if the file does not end in .mp3
  * @return true if the filename ends in .mp3
