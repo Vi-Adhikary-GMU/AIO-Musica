@@ -1,18 +1,19 @@
 package com.example.aio_musica.file_upload
 
 import android.net.Uri
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.update
 import java.io.FileNotFoundException
 import java.io.IOException
 
@@ -25,11 +26,13 @@ class UploadFileViewModel (
     private val repository: FileRepository
 ) : ViewModel() {
 
+    private val _state = MutableStateFlow(UploadSate())
+
     /**
-     * State of the upload.
+     * State of the upload. Collect this from the UI.
+     * (This is a StateFlow rather than Compose state because MainActivity uses XML Views.)
      */
-    var state by mutableStateOf(UploadSate())
-        private set
+    val state: StateFlow<UploadSate> = _state.asStateFlow()
 
     /**
      * Job for the upload.
@@ -45,19 +48,23 @@ class UploadFileViewModel (
      * @param content The URI of the file to import.
      */
     fun uploadFile(content: Uri) {
+        if (_state.value.isUploading) return // Ignore picks while an upload is already running.
+
         uploadJob = repository
             .uploadFile(content)
             /**
              * Starts the upload.
              */
             .onStart {
-                state = state.copy(
-                    isUploading = true,
-                    isUploadComplete = false,
-                    progress = 0f,
-                    errorMessage = null,
-                    importedFile = null
-                )
+                _state.update {
+                    it.copy(
+                        isUploading = true,
+                        isUploadComplete = false,
+                        progress = 0f,
+                        errorMessage = null,
+                        importedFile = null
+                    )
+                }
             }
             /**
              * Updates the progress of the upload.
@@ -65,14 +72,16 @@ class UploadFileViewModel (
              * The final update also carries the saved file.
              */
             .onEach { progressUpdate ->
-                state = state.copy(
-                    progress = if (progressUpdate.totalBytes > 0) {
-                        progressUpdate.bytesSent.toFloat() / progressUpdate.totalBytes.toFloat()
-                    } else {
-                        state.progress
-                    },
-                    importedFile = progressUpdate.result ?: state.importedFile
-                )
+                _state.update {
+                    it.copy(
+                        progress = if (progressUpdate.totalBytes > 0) {
+                            progressUpdate.bytesSent.toFloat() / progressUpdate.totalBytes.toFloat()
+                        } else {
+                            it.progress
+                        },
+                        importedFile = progressUpdate.result ?: it.importedFile
+                    )
+                }
             }
             /**
              * Ends the upload.
@@ -82,17 +91,21 @@ class UploadFileViewModel (
              */
             .onCompletion { cause ->
                 if(cause == null) {
-                    state = state.copy(
-                        isUploading = false,
-                        isUploadComplete = true,
-                    )
+                    _state.update {
+                        it.copy(
+                            isUploading = false,
+                            isUploadComplete = true,
+                        )
+                    }
                 } else if(cause is CancellationException) {
-                    state = state.copy(
-                        isUploading = false,
-                        errorMessage = "Upload cancelled",
-                        isUploadComplete = false,
-                        progress = 0f
-                    )
+                    _state.update {
+                        it.copy(
+                            isUploading = false,
+                            errorMessage = "Upload cancelled",
+                            isUploadComplete = false,
+                            progress = 0f
+                        )
+                    }
                 }
             }
             .catch { cause ->
@@ -101,10 +114,12 @@ class UploadFileViewModel (
                     is IOException -> "Couldn't copy file. Is your storage full?"
                     else -> "Something went wrong"
                 }
-                state = state.copy(
-                    isUploading = false,
-                    errorMessage = message
-                )
+                _state.update {
+                    it.copy(
+                        isUploading = false,
+                        errorMessage = message
+                    )
+                }
             }
             .launchIn(viewModelScope)
     }
