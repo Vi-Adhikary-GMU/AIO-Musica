@@ -6,7 +6,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import io.ktor.util.network.UnresolvedAddressException
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.catch
@@ -14,12 +13,13 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.onStart
-import okio.FileNotFoundException
+import java.io.FileNotFoundException
+import java.io.IOException
 
 /**
- * ViewModel for uploading a file.
+ * ViewModel for importing a file into the app.
  * Links to the actual progress bar. Watches the progress from FileRepository.kt
- * @param repository The FileRepository class that handles the upload.
+ * @param repository The FileRepository class that handles copying the file.
  */
 class UploadFileViewModel (
     private val repository: FileRepository
@@ -37,13 +37,12 @@ class UploadFileViewModel (
     private var uploadJob: Job? = null
 
     /**
-     * Uploads a file to the server.
-     * @param content The URI of the file to upload.
-     * @throws CancellationException if the upload is canceled.
-     * @throws OutOfMemoryError if the file is too large.
-     * @throws FileNotFoundException if the file is not found.
-     * @throws UnresolvedAddressException if there is no internet connection.
-     * @throws Exception if something goes wrong.
+     * Copies the chosen file into app storage.
+     * Failures are reported through [UploadSate.errorMessage] rather than thrown:
+     * - [CancellationException]: the upload was cancelled.
+     * - [FileNotFoundException]: the file could not be found/opened.
+     * - [IOException]: reading or writing failed (e.g. device storage is full).
+     * @param content The URI of the file to import.
      */
     fun uploadFile(content: Uri) {
         uploadJob = repository
@@ -56,23 +55,30 @@ class UploadFileViewModel (
                     isUploading = true,
                     isUploadComplete = false,
                     progress = 0f,
-                    errorMessage = null
+                    errorMessage = null,
+                    importedFile = null
                 )
             }
             /**
              * Updates the progress of the upload.
              * Casts progress update to float and divides by total bytes to get a percentage.
+             * The final update also carries the saved file.
              */
             .onEach { progressUpdate ->
                 state = state.copy(
-                    progress = progressUpdate.bytesSent.toFloat() / progressUpdate.totalBytes.toFloat()
+                    progress = if (progressUpdate.totalBytes > 0) {
+                        progressUpdate.bytesSent.toFloat() / progressUpdate.totalBytes.toFloat()
+                    } else {
+                        state.progress
+                    },
+                    importedFile = progressUpdate.result ?: state.importedFile
                 )
             }
             /**
              * Ends the upload.
              * If the upload is successful, the state is updated to reflect that.
              * If the upload is canceled, the state is updated to reflect that.
-             * If the upload fails, the state is updated to reflect that.
+             * If the upload fails, the catch block below updates the state.
              */
             .onCompletion { cause ->
                 if(cause == null) {
@@ -91,9 +97,8 @@ class UploadFileViewModel (
             }
             .catch { cause ->
                 val message = when(cause) {
-                    is OutOfMemoryError -> "File too large"
                     is FileNotFoundException -> "File not found"
-                    is UnresolvedAddressException -> "No internet"
+                    is IOException -> "Couldn't copy file. Is your storage full?"
                     else -> "Something went wrong"
                 }
                 state = state.copy(
@@ -116,5 +121,7 @@ data class UploadSate(
     val isUploading: Boolean = false,
     val isUploadComplete: Boolean = false,
     val progress: Float = 0f,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    /** The saved file once the upload completes. Use this to create a Song in the library. */
+    val importedFile: ImportedFile? = null
 )
