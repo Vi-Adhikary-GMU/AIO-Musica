@@ -2,9 +2,11 @@ package com.example.aio_musica.file_upload
 
 import android.content.Context
 import android.net.Uri
+import android.provider.OpenableColumns
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.withContext
-import java.util.UUID
+import java.io.FileNotFoundException
+import java.io.InputStream
 
 class FileReader(
     private val context: Context,
@@ -12,34 +14,68 @@ class FileReader(
 ) {
 
     /**
-     * Reads a file from the given URI and returns its content as a [FileInfo] object.
-     * @param contentUri The URI of the file to read.
-     * @param ioDispatcher The coroutine dispatcher to use for I/O operations.
+     * Reads the metadata (name, type, size) of the file at the given URI.
+     * This does NOT load the file contents into memory; use [openInputStream] and read it in chunks.
+     * @param contentUri The URI of the file the user picked.
+     * @return A [FileInfo] describing the file.
      */
-    suspend fun uriToFileInfo(contentUri: Uri): FileInfo {
+    suspend fun readFileInfo(contentUri: Uri): FileInfo {
         return withContext(ioDispatcher) {
-            val bytes = context.contentResolver.openInputStream(contentUri)?.use { inputStream -> inputStream.readBytes() } ?: byteArrayOf() // Handles null case // TODO: This method of byte reading will probably not work when dealing with larger file sizes. Look into a better byte-by-byte implementation.
+            val resolver = context.contentResolver
 
-            val fileName = UUID.randomUUID().toString() // TODO: This generates a random file name. It's expected that the backend will resolve this and give the file it's own name when it is uploaded, but we can change this if needed.
-            val mimeType = context.contentResolver.getType(contentUri) ?: ""
+            var displayName: String? = null
+            var sizeBytes = UNKNOWN_SIZE
+
+            resolver.query(
+                contentUri,
+                arrayOf(OpenableColumns.DISPLAY_NAME, OpenableColumns.SIZE),
+                null,
+                null,
+                null
+            )?.use { cursor ->
+                if (cursor.moveToFirst()) {
+                    val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                    val sizeIndex = cursor.getColumnIndex(OpenableColumns.SIZE)
+                    if (nameIndex >= 0 && !cursor.isNull(nameIndex)) {
+                        displayName = cursor.getString(nameIndex)
+                    }
+                    if (sizeIndex >= 0 && !cursor.isNull(sizeIndex)) {
+                        sizeBytes = cursor.getLong(sizeIndex)
+                    }
+                }
+            }
 
             FileInfo(
-                name = fileName,
-                mimeType = mimeType,
-                bytes = bytes
+                name = displayName ?: contentUri.lastPathSegment ?: "Unknown",
+                mimeType = resolver.getType(contentUri) ?: "",
+                sizeBytes = sizeBytes
             )
         }
+    }
+
+    /**
+     * Opens a stream to read the file at the given URI.
+     * The caller is responsible for closing it (use `.use { }`).
+     * @throws FileNotFoundException if the file can't be opened.
+     */
+    fun openInputStream(contentUri: Uri): InputStream {
+        return context.contentResolver.openInputStream(contentUri)
+            ?: throw FileNotFoundException("Unable to open $contentUri")
+    }
+
+    companion object {
+        const val UNKNOWN_SIZE = -1L
     }
 }
 
 /**
- * Contains general information about our passed in file.
- * @param name The name of the file.
- * @param mimeType The file type.
- * @param bytes The file bytes.
+ * Contains general information about a file the user picked.
+ * @param name The file's display name (e.g. "my_song.mp3").
+ * @param mimeType The file type (e.g. "audio/mpeg"). Empty if unknown.
+ * @param sizeBytes The size in bytes, or [FileReader.UNKNOWN_SIZE] if the provider didn't report one.
  */
 class FileInfo(
     val name: String,
     val mimeType: String,
-    val bytes: ByteArray
+    val sizeBytes: Long
 )
