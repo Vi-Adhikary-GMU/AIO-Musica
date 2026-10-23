@@ -20,7 +20,7 @@ class FileRepository (
      * @param contentUri The URI of the file to upload.
      * @return A flow of [ProgressInfo] objects representing the upload progress.
      */
-    suspend fun uploadFile(contentUri: Uri) : Flow<ProgressUpdate> = channelFlow {
+    fun uploadFile(contentUri: Uri) : Flow<ProgressUpdate> = channelFlow {
         val info = fileReader.uriToFileInfo(contentUri)
 
         httpClient.submitFormWithBinaryData(
