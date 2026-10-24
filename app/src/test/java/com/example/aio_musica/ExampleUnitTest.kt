@@ -235,3 +235,47 @@ class TestUploadState {
         assertEquals("File not found", state.errorMessage)
     }
 }
+
+/**
+ * Converts a song's duration in seconds into a formatted string for displaying to the user
+ * in the music player interface.
+ *
+ * The format is M:SS where M is the total minutes and SS are the remaining seconds. Seconds will
+ * always be displayed using two digits.
+ *
+ * @param totalSeconds song's duration in seconds, must be non-negative int.
+ * @return string representing the duration in M:SS format.
+ *         Returns "0:00" if totalSeconds is negative or zero.
+ */
+fun formatSongDuration(totalSeconds: Int): String {
+    if (totalSeconds < 0) {
+        return "0:00"
+    }
+    val minutes = totalSeconds / 60
+    val seconds = totalSeconds % 60
+
+    return "$minutes:${seconds.toString().padStart(2, '0')}"
+}
+
+class TestFormatSongDuration() {
+
+    @Test
+    fun testNormalDuration() {
+        assertEquals("3:45", formatSongDuration(225))
+    }
+
+    @Test
+    fun testSingleDigitSeconds() {
+        assertEquals("1:05", formatSongDuration(65))
+    }
+
+    @Test
+    fun testZeroDuration() {
+        assertEquals("0:00", formatSongDuration(0))
+    }
+
+    @Test
+    fun testNegativeDuration() {
+        assertEquals("0:00", formatSongDuration(-10))
+    }
+}
