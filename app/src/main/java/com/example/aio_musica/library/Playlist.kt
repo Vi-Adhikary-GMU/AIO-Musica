@@ -1,25 +1,33 @@
 package com.example.aio_musica.library
 import java.sql.Timestamp
 
-//Class will represent Playlist object
+/**
+ * Some things to note / Design consideration. We should never call setName on a playlist object directly but should always do it through library object.
+ */
 
 class Playlist(
 
     private var name: String,
-    // No public setter: the list can only be changed through addSong, removeSong, and reset
-    private val songIDs: MutableList<String> = mutableListOf(),
+    private val library: Library,
     // No setter: only set when the playlist object is created
-    private val dateCreated: Timestamp = Timestamp(System.currentTimeMillis())
-) {
+    private val dateCreated: Timestamp = Timestamp(System.currentTimeMillis()),
 
+
+) {
+    // Always starts empty, No public setter: the list can only be changed through addSong, removeSong, and reset
+    private val songIDs: MutableList<String> = mutableListOf()
     /**
      * Function will add a song's ID to the songIDs list
      * @param song a song object
+     * @throws NoSuchElementException when the song is not in the library
      * @throws IllegalArgumentException when the song is already in the playlist
      */
     fun addSong(song: Song) {
+        if (!library.containsSong(song.id)) {
+            throw NoSuchElementException("Song '${song.id}' is not in the library")
+        }
         if (songIDs.contains(song.id)) {
-            throw IllegalArgumentException("Song ${song.id} is already in playlist '$name'")
+            throw IllegalArgumentException("Song '${song.id}' is already in playlist '$name'")
         }
         songIDs.add(song.id)
     }
