@@ -1,5 +1,6 @@
 package com.example.aio_musica.library
 
+import android.media.MediaMetadataRetriever
 import android.net.Uri
 
 class Metadata(
@@ -11,8 +12,36 @@ class Metadata(
     var album: String = "Unknown Album"
     val mimeType: String = "audio/mpeg"
 
+    init{
+        extractMetadata()
+    }
+
+    private fun extractMetadata()
+    {
+        val retriever = MediaMetadataRetriever()
+        try {
+            retriever.setDataSource(uri.path!!)
+
+            title = retriever.extractMetadata(
+                MediaMetadataRetriever.METADATA_KEY_TITLE
+            ) ?: "Unknown Title"
+
+            artist = retriever.extractMetadata(
+                MediaMetadataRetriever.METADATA_KEY_ARTIST
+            ) ?: "Unknown Artist"
+
+            album = retriever.extractMetadata(
+                MediaMetadataRetriever.METADATA_KEY_ALBUM
+            ) ?: "Unknown Album"
+
+        } catch (e: Exception) {
+            e.printStackTrace()
+        } finally {
+            retriever.release()
+        }
+    }
+
     fun getTitle(): String {
-        // parse title :)
         return title
     }
     fun getArtist(): String {
@@ -26,6 +55,8 @@ class Metadata(
         val song = Song(
             id = id,
             title = title,
+            artist = artist,
+            album = album,
             uri = uri,
             mimeType = mimeType
         )
