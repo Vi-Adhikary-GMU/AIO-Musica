@@ -49,13 +49,13 @@ import org.junit.Before
          assertEquals("Background Music", song.title)
      }
 
-     //test 5: see if the generated song matches the title given
+     //test 5: see if the generated song matches the artist given
      @Test
      fun generateSong_CorrectArtist(){
          assertEquals("JonasBlakewood", song.artist)
      }
 
-     //test 6: see if the generated song matches the title given
+     //test 6: see if the generated song matches the album given
      @Test
      fun generateSong_CorrectAlbum(){
          assertEquals("n/a", song.album)
