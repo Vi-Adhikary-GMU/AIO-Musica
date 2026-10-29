@@ -7,8 +7,14 @@ class Metadata(
     private val uri: Uri
 ) {
     private val id: String = "-1"
+
+    @get:JvmName("titleValue")
     var title: String = "Unknown Title"
+
+    @get:JvmName("artistValue")
     var artist: String = "Unknown Artist"
+
+    @get:JvmName("albumValue")
     var album: String = "Unknown Album"
     val mimeType: String = "audio/mpeg"
 
