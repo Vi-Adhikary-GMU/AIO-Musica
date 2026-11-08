@@ -19,6 +19,7 @@ import com.example.aio_musica.file_upload.FileReader
 import com.example.aio_musica.file_upload.FileRepository
 import com.example.aio_musica.file_upload.UploadFileViewModel
 import com.example.aio_musica.file_upload.UploadSate
+import com.example.aio_musica.library.LibraryStorage
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.progressindicator.LinearProgressIndicator
 import kotlinx.coroutines.Dispatchers
@@ -26,6 +27,20 @@ import kotlinx.coroutines.launch
 import java.io.File
 
 class MainActivity : AppCompatActivity() {
+
+    /**
+     * Saves and loads the library data from storage when it's first accessed.
+     */
+    private val libraryStorage by lazy {
+        LibraryStorage(applicationContext)
+    }
+
+    /**
+     * The previously saved library that loads when it's first accessed.
+     */
+    private val library by lazy {
+        libraryStorage.load()
+    }
 
     /**
      * The ViewModel needs a FileRepository, so it's created through a factory.
@@ -39,7 +54,9 @@ class MainActivity : AppCompatActivity() {
                         fileReader = FileReader(applicationContext, Dispatchers.IO),
                         storageDir = File(applicationContext.filesDir, "songs"),
                         ioDispatcher = Dispatchers.IO
-                    )
+                    ),
+                    library = library,
+                    libraryStorage = libraryStorage
                 )
             }
         }

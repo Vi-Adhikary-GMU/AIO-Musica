@@ -16,14 +16,21 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.update
 import java.io.FileNotFoundException
 import java.io.IOException
+import com.example.aio_musica.library.Library
+import com.example.aio_musica.library.LibraryStorage
+import com.example.aio_musica.library.Metadata
 
 /**
  * ViewModel for importing a file into the app.
  * Links to the actual progress bar. Watches the progress from FileRepository.kt
  * @param repository The FileRepository class that handles copying the file.
+ * @param library The library containing songs and playlists
+ * @param libraryStorage Handles saving the library to storage
  */
 class UploadFileViewModel (
-    private val repository: FileRepository
+    private val repository: FileRepository,
+    private val library: Library,
+    private val libraryStorage: LibraryStorage
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(UploadSate())
@@ -85,12 +92,20 @@ class UploadFileViewModel (
             }
             /**
              * Ends the upload.
-             * If the upload is successful, the state is updated to reflect that.
+             * If the upload is successful, the state is updated to reflect that,
+             * and it adds the imported audio file to the library as a song.
              * If the upload is canceled, the state is updated to reflect that.
              * If the upload fails, the catch block below updates the state.
              */
             .onCompletion { cause ->
                 if(cause == null) {
+                    val importedFile =  _state.value.importedFile
+                    if (importedFile != null) {
+                        val metadata = Metadata(Uri.fromFile(importedFile.file))
+                        val song = metadata.generateSong()
+                        library.addSong(song)
+                        libraryStorage.save(library)
+                    }
                     _state.update {
                         it.copy(
                             isUploading = false,
