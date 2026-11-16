@@ -101,7 +101,11 @@ class UploadFileViewModel (
                 if(cause == null) {
                     val importedFile =  _state.value.importedFile
                     if (importedFile != null) {
-                        val metadata = Metadata(Uri.fromFile(importedFile.file))
+                        val metadata = Metadata(
+                        uri = Uri.fromFile(importedFile.file),
+                        fallbackTitle = importedFile.displayName.substringBeforeLast('.'),
+                        mimeType = importedFile.mimeType.ifBlank { "audio/mpeg" }
+                        )
                         val song = metadata.generateSong()
                         library.addSong(song)
                         libraryStorage.save(library)
