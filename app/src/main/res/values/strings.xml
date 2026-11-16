@@ -9,4 +9,24 @@
     <string name="playlist">Playlist</string>
     <string name="music">Music</string>
     <string name="file">File</string>
+    
+    <!--  Playlists  -->
+    <string name="playlist_new">New playlist</string>
+    <string name="playlist_create">Create</string>
+    <string name="playlist_name_hint">Playlist name</string>
+    <string name="playlist_delete">Delete</string>
+    <string name="playlist_delete_title">Delete playlist?</string>
+    <string name="playlist_delete_message">\"%1$s\" will be deleted. The songs stay in your library.</string>
+    <string name="playlist_add_songs">Add songs</string>
+    <string name="playlist_add">Add</string>
+    <string name="playlist_remove_song">Remove</string>
+    <string name="playlist_library_empty">Your library has no songs yet. Add some from the File tab.</string>
+    <string name="playlist_all_songs_added">Every song in your library is already in this playlist.</string>
+    <string name="playlist_error_name_empty">Please enter a name.</string>
+    <string name="playlist_error_name_taken">A playlist named \"%1$s\" already exists.</string>
+    <string name="playlist_error_not_found">That playlist could not be found.</string>
+    <plurals name="playlist_song_count">
+    <item quantity="one">%d song</item>
+    <item quantity="other">%d songs</item>
+    </plurals>
 </resources>
