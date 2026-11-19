@@ -29,4 +29,18 @@
     <item quantity="one">%d song</item>
     <item quantity="other">%d songs</item>
     </plurals>
+
+    <string name="tab_original">Original</string>
+    <string name="tab_mixer">Mixer</string>
+
+    <string name="stem_mute">Mute</string>
+    <string name="stem_unmute">Unmute</string>
+    <string name="stem_export_description">Export %1$s stem</string>
+    <string name="stem_export_title">Export stem?</string>
+    <string name="stem_export_message">Download the %1$s stem to your device?</string>
+    <string name="stem_export_confirm">Export</string>
+    <string name="stem_export_started">Exporting %1$s…</string>
+    <string name="stem_volume">Volume</string>
+
+
 </resources>
