@@ -2,21 +2,26 @@ package com.example.aio_musica.library
 
 import android.media.MediaMetadataRetriever
 import android.net.Uri
+import java.util.UUID
 
 class Metadata(
-    private val uri: Uri
+    private val uri: Uri,
+    private val fallbackTitle: String = "Unknown Title",
+    val mimeType: String = "audio/mpeg"
 ) {
-    private val id: String = "-1"
+    // Every song needs its own id: Library.addSong rejects duplicates, so a shared id
+    // meant only one song could ever be imported.
+    private val id: String = UUID.randomUUID().toString()
 
     @get:JvmName("titleValue")
-    var title: String = "Unknown Title"
+    var title: String = fallbackTitle
 
     @get:JvmName("artistValue")
     var artist: String = "Unknown Artist"
 
     @get:JvmName("albumValue")
     var album: String = "Unknown Album"
-    val mimeType: String = "audio/mpeg"
+    
 
     init{
         extractMetadata()
@@ -30,7 +35,7 @@ class Metadata(
 
             title = retriever.extractMetadata(
                 MediaMetadataRetriever.METADATA_KEY_TITLE
-            ) ?: "Unknown Title"
+            ) ?.takeIf { it.isNotBlank() } ?: fallbackTitle
 
             artist = retriever.extractMetadata(
                 MediaMetadataRetriever.METADATA_KEY_ARTIST

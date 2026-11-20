@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <com.google.android.material.tabs.TabLayout
+        android:id="@+id/musicTabs"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <com.google.android.material.tabs.TabItem
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/tab_original" />
+
+        <com.google.android.material.tabs.TabItem
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/tab_mixer" />
+    </com.google.android.material.tabs.TabLayout>
+
+    <!-- Original tab: build your artist / title / album icon / progress bar in here -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/originalContent"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <!-- Mixer tab: StemMixerScreen is placed here, hidden until Mixer is selected -->
+    <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/mixerContainer"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:visibility="gone" />
+
+</LinearLayout>

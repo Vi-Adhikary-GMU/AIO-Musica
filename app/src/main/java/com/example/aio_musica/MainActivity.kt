@@ -1,83 +1,46 @@
 package com.example.aio_musica
 
 import android.os.Bundle
-import android.widget.TextView
-import androidx.activity.enableEdgeToEdge
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.activity.viewModels
-import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.isInvisible
-import androidx.core.view.isVisible
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.lifecycleScope
 import android.view.View
 import android.widget.FrameLayout
-import androidx.lifecycle.repeatOnLifecycle
-import androidx.lifecycle.viewmodel.initializer
-import androidx.lifecycle.viewmodel.viewModelFactory
+import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import com.example.aio_musica.file_upload.FileReader
-import com.example.aio_musica.file_upload.FileRepository
-import com.example.aio_musica.file_upload.UploadFileViewModel
-import com.example.aio_musica.file_upload.UploadSate
-import com.google.android.material.button.MaterialButton
-import com.google.android.material.progressindicator.LinearProgressIndicator
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import java.io.File
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.fragment.app.Fragment
+import com.example.aio_musica.ui.FileScreen
+import com.example.aio_musica.ui.LibraryScreen
+import com.example.aio_musica.ui.MusicScreen
+import com.example.aio_musica.ui.PlaylistScreen
+import com.google.android.material.bottomnavigation.BottomNavigationView
 
+/**
+ * Main activity for AIO Musica.
+ *
+ * Hosts the application's navigation screens and displays the
+ * startup branding animation when the application first opens.
+ *
+ * Navigation between File, Music, Playlist, and Library screens
+ * is handled using fragments.
+ */
 class MainActivity : AppCompatActivity() {
 
     /**
-     * The ViewModel needs a FileRepository, so it's created through a factory.
-     * Picked files are copied into `filesDir/songs`.
-     */
-    private val viewModel: UploadFileViewModel by viewModels {
-        viewModelFactory {
-            initializer {
-                UploadFileViewModel(
-                    FileRepository(
-                        fileReader = FileReader(applicationContext, Dispatchers.IO),
-                        storageDir = File(applicationContext.filesDir, "songs"),
-                        ioDispatcher = Dispatchers.IO
-                    )
-                )
-            }
-        }
-    }
-
-    /**
-     * Opens the system file picker (audio files only) and hands the chosen file to the ViewModel.
-     * The result is null if the user backed out without choosing anything.
-     */
-    private val pickFile = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-        if (uri != null) {
-            viewModel.uploadFile(uri)
-        }
-    }
-
-    private lateinit var selectFileButton: MaterialButton
-    private lateinit var cancelButton: MaterialButton
-    private lateinit var progressIndicator: LinearProgressIndicator
-    private lateinit var statusText: TextView
-
-    /**
-     * Initializes main screen for AIO Musica.
+     * Initializes the main application interface.
      *
-     * Installs the startup splash screen before creating the activity,
-     * fades out the screen once the app is ready, and initializes
-     * the existing file-upload interface.
+     * Installs the system splash screen, loads the main layout,
+     * configures bottom navigation, and plays the branding
+     * animation on initial launch.
      *
      * @param savedInstanceState Previously saved activity state,
-     * or null when first created.
+     * or null when the activity is first created.
      */
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
 
-        // fade splash screen out when main screen is ready
+        // Fade out Android's system splash screen.
         splashScreen.setOnExitAnimationListener { provider ->
             provider.view.animate()
                 .alpha(0f)
@@ -85,71 +48,94 @@ class MainActivity : AppCompatActivity() {
                 .withEndAction { provider.remove() }
                 .start()
         }
-        enableEdgeToEdge()
+
         setContentView(R.layout.activity_main)
+
+        // Play the branding animation only on initial launch.
         if (savedInstanceState == null) {
             showBrandingAnimation()
         } else {
-            findViewById<FrameLayout>(R.id.brandingOverlay).visibility = View.GONE
+            findViewById<FrameLayout>(
+                R.id.brandingOverlay
+            ).visibility = View.GONE
         }
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+
+        // Apply system bar spacing to the main layout.
+        ViewCompat.setOnApplyWindowInsetsListener(
+            findViewById(R.id.main)
+        ) { view, insets ->
+            val systemBars = insets.getInsets(
+                WindowInsetsCompat.Type.systemBars()
+            )
+
+            view.setPadding(
+                systemBars.left,
+                systemBars.top,
+                systemBars.right,
+                0
+            )
             insets
         }
 
-        selectFileButton = findViewById(R.id.selectFileButton)
-        cancelButton = findViewById(R.id.cancelButton)
-        progressIndicator = findViewById(R.id.uploadProgress)
-        statusText = findViewById(R.id.statusText)
+        // Configure navigation between the application's screens.
+        val bottomNavigation =
+            findViewById<BottomNavigationView>(R.id.bottomNavigation)
 
-        selectFileButton.setOnClickListener { pickFile.launch(arrayOf("audio/*")) }
-        cancelButton.setOnClickListener { viewModel.cancelUpload() }
-
-        // Redraw the screen every time the upload state changes (only while the screen is visible).
-        lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.state.collect { render(it) }
+        bottomNavigation.setOnItemSelectedListener { item ->
+            val selectedScreen: Fragment = when (item.itemId) {
+                R.id.nav_file -> FileScreen()
+                R.id.nav_music -> MusicScreen()
+                R.id.nav_playlist -> PlaylistScreen()
+                R.id.nav_library -> LibraryScreen()
+                else -> return@setOnItemSelectedListener false
             }
+
+            supportFragmentManager.beginTransaction()
+                .replace(R.id.fragmentContainer, selectedScreen)
+                .commit()
+
+            true
+        }
+
+        // Display the File screen by default on initial launch.
+        if (savedInstanceState == null) {
+            bottomNavigation.selectedItemId = R.id.nav_file
         }
     }
 
     /**
-     * Displays AIO Musica branding animation.
+     * Displays AIO Musica's startup branding animation.
      *
-     * The application title starts invisible, fades into view,
-     * remains visible briefly, and then fades out to reveal the
-     * existing file-upload screen.
+     * The title starts invisible, fades into view, remains
+     * visible briefly, then fades out with its overlay to
+     * reveal the application's main interface.
+     *
+     * Precondition: activity_main.xml has been loaded and
+     * contains brandingOverlay and brandingTitle.
+     *
+     * Postcondition: The branding overlay becomes hidden
+     * after the animation completes.
      */
     private fun showBrandingAnimation() {
         val overlay = findViewById<FrameLayout>(R.id.brandingOverlay)
         val title = findViewById<TextView>(R.id.brandingTitle)
 
+        // Initially hide the application title.
         title.alpha = 0f
+
+        // Fade the title into view.
         title.animate().alpha(1f).setDuration(600L).withEndAction {
+
+            // Briefly display the title before fading out.
             overlay.postDelayed({
-                overlay.animate().alpha(0f).setDuration(400L).withEndAction {
-                    overlay.visibility = View.GONE
-                }.start()
+
+                // Reveal the main application interface.
+                overlay.animate().alpha(0f).setDuration(400L)
+                    .withEndAction {
+                        overlay.visibility = View.GONE
+                    }.start()
+
             }, 600L)
         }.start()
-    }
-    private fun render(state: UploadSate) {
-        selectFileButton.isEnabled = !state.isUploading
-        cancelButton.isVisible = state.isUploading
-
-        val percent = (state.progress * 100).toInt().coerceIn(0, 100)
-        progressIndicator.isInvisible = !(state.isUploading || state.isUploadComplete)
-        progressIndicator.setProgressCompat(percent, true)
-
-        statusText.text = when {
-            state.errorMessage != null -> state.errorMessage
-            state.isUploading -> getString(R.string.status_uploading, percent)
-            state.isUploadComplete -> getString(
-                R.string.status_complete,
-                state.importedFile?.displayName ?: ""
-            )
-            else -> getString(R.string.status_idle)
-        }
     }
 }
