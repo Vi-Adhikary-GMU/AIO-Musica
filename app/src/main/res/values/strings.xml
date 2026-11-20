@@ -5,4 +5,5 @@
     <string name="status_idle">Choose a song from your device to add it to AIO-Musica.</string>
     <string name="status_uploading">Adding file… %1$d%%</string>
     <string name="status_complete">Added %1$s</string>
+    <string name="splash_title">AIO MUSICA</string>
 </resources>

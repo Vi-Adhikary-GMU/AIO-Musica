@@ -12,9 +12,12 @@ import androidx.core.view.isInvisible
 import androidx.core.view.isVisible
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import android.view.View
+import android.widget.FrameLayout
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import com.example.aio_musica.file_upload.FileReader
 import com.example.aio_musica.file_upload.FileRepository
 import com.example.aio_musica.file_upload.UploadFileViewModel
@@ -60,10 +63,35 @@ class MainActivity : AppCompatActivity() {
     private lateinit var progressIndicator: LinearProgressIndicator
     private lateinit var statusText: TextView
 
+    /**
+     * Initializes main screen for AIO Musica.
+     *
+     * Installs the startup splash screen before creating the activity,
+     * fades out the screen once the app is ready, and initializes
+     * the existing file-upload interface.
+     *
+     * @param savedInstanceState Previously saved activity state,
+     * or null when first created.
+     */
     override fun onCreate(savedInstanceState: Bundle?) {
+        val splashScreen = installSplashScreen()
         super.onCreate(savedInstanceState)
+
+        // fade splash screen out when main screen is ready
+        splashScreen.setOnExitAnimationListener { provider ->
+            provider.view.animate()
+                .alpha(0f)
+                .setDuration(350L)
+                .withEndAction { provider.remove() }
+                .start()
+        }
         enableEdgeToEdge()
         setContentView(R.layout.activity_main)
+        if (savedInstanceState == null) {
+            showBrandingAnimation()
+        } else {
+            findViewById<FrameLayout>(R.id.brandingOverlay).visibility = View.GONE
+        }
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
@@ -86,6 +114,26 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * Displays AIO Musica branding animation.
+     *
+     * The application title starts invisible, fades into view,
+     * remains visible briefly, and then fades out to reveal the
+     * existing file-upload screen.
+     */
+    private fun showBrandingAnimation() {
+        val overlay = findViewById<FrameLayout>(R.id.brandingOverlay)
+        val title = findViewById<TextView>(R.id.brandingTitle)
+
+        title.alpha = 0f
+        title.animate().alpha(1f).setDuration(600L).withEndAction {
+            overlay.postDelayed({
+                overlay.animate().alpha(0f).setDuration(400L).withEndAction {
+                    overlay.visibility = View.GONE
+                }.start()
+            }, 600L)
+        }.start()
+    }
     private fun render(state: UploadSate) {
         selectFileButton.isEnabled = !state.isUploading
         cancelButton.isVisible = state.isUploading
