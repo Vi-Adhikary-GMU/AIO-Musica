@@ -59,5 +59,6 @@
     <string name="player_next">Next</string>
 
     <string name="mixer_empty_message">No separated tracks yet</string>
+    <string name="player_load_error">Unable to play this song.</string>
 
 </resources>
