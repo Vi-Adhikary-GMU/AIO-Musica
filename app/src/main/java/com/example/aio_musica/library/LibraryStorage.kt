@@ -49,7 +49,17 @@ class LibraryStorage(context: Context) {
         data.put("songs", songs)
         data.put("playlists", playlists)
 
-        file.writeText(data.toString(2))
+        // Write to a temporary file first and then swap it in, so a crash or a full disk
+        // halfway through saving can never leave a corrupted library.json behind.
+        val temp = File(file.parentFile, file.name + ".tmp")
+        temp.writeText(data.toString(2))
+        if (!temp.renameTo(file)) {
+            file.delete()
+            if (!temp.renameTo(file)) {
+                temp.delete()
+                throw java.io.IOException("Couldn't save the library to ${file.absolutePath}")
+            }
+        }
     }
 
     // Load the saved library

@@ -3,24 +3,27 @@ package com.example.aio_musica
 import android.os.Bundle
 import android.view.View
 import android.widget.FrameLayout
-import android.widget.TextView
 import android.widget.ImageView
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModelProvider
+import com.example.aio_musica.mvsep.MvsepClient
 import com.example.aio_musica.ui.FileScreen
 import com.example.aio_musica.ui.LibraryScreen
 import com.example.aio_musica.ui.MusicScreen
 import com.example.aio_musica.ui.PlaylistScreen
+import com.example.aio_musica.ui.StemMixerViewModel
 import com.google.android.material.bottomnavigation.BottomNavigationView
 
 /**
  * Main activity for AIO Musica.
  *
- * Hosts the application's navigation screens and displays the
- * startup branding animation when the application first opens.
+ * Hosts the application's navigation screens, initializes MVSEP
+ * integration, and displays the startup branding animation.
  *
  * Navigation between File, Music, Playlist, and Library screens
  * is handled using fragments.
@@ -31,14 +34,15 @@ class MainActivity : AppCompatActivity() {
      * Initializes the main application interface.
      *
      * Installs the system splash screen, loads the main layout,
-     * configures bottom navigation, and plays the branding
-     * animation on initial launch.
+     * configures MVSEP integration and bottom navigation, and
+     * plays the branding animation on initial launch.
      *
      * @param savedInstanceState Previously saved activity state,
      * or null when the activity is first created.
      */
     override fun onCreate(savedInstanceState: Bundle?) {
         val splashScreen = installSplashScreen()
+
         super.onCreate(savedInstanceState)
 
         // Fade out Android's system splash screen.
@@ -52,7 +56,10 @@ class MainActivity : AppCompatActivity() {
 
         setContentView(R.layout.activity_main)
 
-        // Play the branding animation only on initial launch.
+        // Initialize MVSEP integration using the configured API token.
+        initializeMvsep()
+
+        // Play branding only on initial launch.
         if (savedInstanceState == null) {
             showBrandingAnimation()
         } else {
@@ -75,10 +82,11 @@ class MainActivity : AppCompatActivity() {
                 systemBars.right,
                 0
             )
+
             insets
         }
 
-        // Configure navigation between the application's screens.
+        // Configure navigation between application screens.
         val bottomNavigation =
             findViewById<BottomNavigationView>(R.id.bottomNavigation)
 
@@ -98,7 +106,7 @@ class MainActivity : AppCompatActivity() {
             true
         }
 
-        // Display the File screen by default on initial launch.
+        // Display the File screen on initial launch.
         if (savedInstanceState == null) {
             bottomNavigation.selectedItemId = R.id.nav_file
         }
@@ -129,6 +137,7 @@ class MainActivity : AppCompatActivity() {
 
         // Fade in the logo and title.
         logo.animate().alpha(1f).setDuration(700L).start()
+
         title.animate().alpha(1f).setDuration(700L).withEndAction {
 
             // Hold the branding briefly before fading out.
@@ -140,5 +149,31 @@ class MainActivity : AppCompatActivity() {
             }, 1000L)
         }.start()
     }
-    }
 
+    /**
+     * Configures the stem mixer with the MVSEP repository.
+     *
+     * Reads the API token from the build configuration. If the
+     * token is blank, initialization is skipped. Otherwise,
+     * creates the repository and configures the shared mixer
+     * ViewModel for track separation.
+     *
+     * Precondition: The activity has been created.
+     * Postcondition: The mixer ViewModel is configured when
+     * a nonblank API token is available.
+     */
+    private fun initializeMvsep() {
+        val token = BuildConfig.MVSEP_API_TOKEN
+
+        if (token.isBlank()) {
+            return
+        }
+
+        val repository = MvsepClient.createRepository(token)
+
+        val viewModel = ViewModelProvider(this)
+            .get(StemMixerViewModel::class.java)
+
+        viewModel.configure(repository)
+    }
+}

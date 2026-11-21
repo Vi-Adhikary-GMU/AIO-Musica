@@ -5,30 +5,225 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import androidx.lifecycle.viewModelScope
+import com.example.aio_musica.mvsep.MvsepRepository
+import com.example.aio_musica.mvsep.MvsepDownloader
+import com.example.aio_musica.mvsep.DownloadedStem
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.launch
+import java.io.File
+import java.util.UUID
+import kotlinx.coroutines.Job
 
 
 data class StemState(
     val id: String,
     val name: String,
     val volume: Float = 1f,
-    val muted: Boolean = false
+    val muted: Boolean = false,
+    val audioFile: File? = null
 )
 
 class StemMixerViewModel : ViewModel() {
-    private val _stems = MutableStateFlow(
-        listOf("Vocals", "Instrumental", "Guitar", "Bass", "Drums", "Piano", "Other")
-            .map { StemState(id = it.lowercase(), name = it) }
-    )
+
+    /**
+     * Repository for MVSEP API operations.
+     */
+    private var mvsepRepository: MvsepRepository? = null
+
+    /**
+     * Downloader for saving separated audio files.
+     */
+    private val downloader = MvsepDownloader()
+    /**
+     * Active separation coroutine.
+     */
+    private var separationJob: Job? = null
+    /**
+     * Current mixer tracks.
+     */
+    private val _stems = MutableStateFlow<List<StemState>>(emptyList())
     val stems: StateFlow<List<StemState>> = _stems.asStateFlow()
-    fun setVolume(id: String, volume: Float) = updateStem(id) {
-        it.copy(volume = volume.coerceIn(0f, 1f))
+
+    /**
+     * Successfully downloaded audio stems
+     */
+    private val _downloadedStems = MutableStateFlow<List<DownloadedStem>>(emptyList())
+    val downloadedStems: StateFlow<List<DownloadedStem>> = _downloadedStems.asStateFlow()
+
+    /**
+     * Indicates whether separation or downloading is in progress.
+     */
+    private val _isProcessing = MutableStateFlow(false)
+
+    val isProcessing: StateFlow<Boolean> = _isProcessing.asStateFlow()
+
+    /**
+     * Current processing status message.
+     */
+    private val _status = MutableStateFlow("")
+
+    val status: StateFlow<String> = _status.asStateFlow()
+
+    /**
+     * Current error message, if any.
+     */
+    private val _error = MutableStateFlow<String?>(null)
+
+    val error: StateFlow<String?> = _error.asStateFlow()
+
+    /**
+     * Configure MVSEP repository.
+     */
+    fun configure(repository: MvsepRepository) {
+        mvsepRepository = repository
+        _error.value = null
     }
-    fun toggleMute(id: String) = updateStem(id) { it.copy(muted = !it.muted) }
+
+    /**
+     * Separates an audio file using MVSEP and downloads
+     * the resulting audio stems.
+     * After downloading, each stem is converted into a
+     * [StemState] for use by the mixer interface.
+     *
+     * @param file Original audio file to separate.
+     * @param destinationDir Directory where separated stems
+     * will be stored.
+     */
+    fun separateSong(
+        file: File,
+        destinationDir: File
+    ) {
+        if (separationJob?.isActive == true) {
+            return
+        }
+        val repository = mvsepRepository
+        if (repository == null) {
+            _error.value = "MVSEP repository is not configured."
+            return
+        }
+        if (!file.exists() || !file.isFile) {
+            _error.value = "Selected audio file does not exist."
+            return
+        }
+        if (destinationDir.exists() && !destinationDir.isDirectory) {
+            _error.value = "Destination path is not a directory."
+            return
+        }
+        separationJob = viewModelScope.launch {
+            _isProcessing.value = true
+            _error.value = null
+            _status.value = "Uploading song..."
+            _stems.value = emptyList()
+            _downloadedStems.value = emptyList()
+            try {
+                // Submit audio separation request.
+                val result = repository.separateSong(file)
+                _status.value = "Downloading separated tracks..."
+                // Download the generated audio stems.
+                val downloaded = downloader.downloadStems(
+                    stems = result,
+                    destinationDir = destinationDir
+                )
+                // Save downloaded files.
+                _downloadedStems.value = downloaded
+                // Convert downloaded files into mixer tracks.
+                _stems.value = downloaded.map { stem ->
+                    StemState(
+                        id = UUID.randomUUID().toString(),
+                        name = stem.name,
+                        audioFile = stem.file
+                    )
+                }
+                _status.value = "Separation complete!"
+            } catch (e: CancellationException) {
+                _status.value = "Separation cancelled"
+                throw e
+            } catch (e: Exception) {
+                _error.value = e.message
+                    ?: "An error occurred during audio separation."
+                _status.value = "Separation failed"
+            } finally {
+                _isProcessing.value = false
+                separationJob = null
+            }
+        }
+    }
+
+    /**
+     * Updates the playback volume of a specific stem.
+     * Volume is restricted to the range 0.0 to 1.0.
+     *
+     * @param id Unique identifier of the stem.
+     * @param volume Requested volume level.
+     */
+    fun setVolume(id: String, volume: Float) {
+        updateStem(id) {
+            it.copy(
+                volume = volume.coerceIn(0f, 1f)
+            )
+        }
+    }
+
+    /**
+     * Toggles the mute state of a specific stem.
+     *
+     * @param id Unique identifier of the stem.
+     */
+    fun toggleMute(id: String) {
+        updateStem(id) {
+            it.copy(muted = !it.muted)
+        }
+    }
+
+    /**
+     * Retrieves the local audio file associated with a stem.
+     *
+     * @param id Unique identifier of the stem.
+     * @return Audio file if found, otherwise null.
+     */
+    fun getStemFile(id: String): File? {
+        return _stems.value
+            .firstOrNull { it.id == id }
+            ?.audioFile
+    }
 
     fun exportStem(id: String) {
-
+        val file = getStemFile(id)
+        if (file == null || !file.exists()) {
+            _error.value = "Stem audio file not found."
+            return
+        }
+        _status.value = "${file.name} is saved locally."
     }
+
+    /**
+     * Clears the current error message.
+     */
+    fun clearError() {
+        _error.value = null
+    }
+
+    /**
+     * Cancels ongoing separation and clears the mixer state.
+     * Downloaded files are not deleted from storage.
+     */
+    fun clearStems() {
+        separationJob?.cancel()
+        separationJob = null
+        _stems.value = emptyList()
+        _downloadedStems.value = emptyList()
+        _status.value = ""
+        _error.value = null
+    }
+
+    /**
+     * Updates a stem using its unique identifier.
+     *
+     * @param id Unique identifier of the stem.
+     * @param change Function producing the updated stem state.
+     */
     private fun updateStem(id: String, change: (StemState) -> StemState) {
-        _stems.update { list -> list.map { if (it.id == id) change(it) else it } }
+        _stems.update { list -> list.map { stem -> if (stem.id == id) {change(stem)} else {stem}}}
     }
 }

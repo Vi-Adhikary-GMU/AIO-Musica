@@ -22,14 +22,15 @@ data class Row(
 
 /**
  * Shows a list of [Row]s. Used for both the list of playlists and the songs inside one playlist.
- * @param actionLabel text of the button on the right of each row (e.g. "Delete" or "Remove")
+ * @param actionLabel text of the button on the right of each row (e.g. "Delete" or "Remove"),
+ * or null to hide the button (read-only lists such as the Library tab)
  * @param onRowClick called with the row's key when the row itself is tapped, or null if rows aren't tappable
- * @param onActionClick called with the row's key when the action button is tapped
+ * @param onActionClick called with the row's key when the action button is tapped, or null if there is no button
  */
 class RowAdapter(
-    private val actionLabel: String,
+    private val actionLabel: String?,
     private val onRowClick: ((String) -> Unit)?,
-    private val onActionClick: (String) -> Unit
+    private val onActionClick: ((String) -> Unit)?
 ) : ListAdapter<Row, RowAdapter.Holder>(DIFF) {
 
     class Holder(view: View) : RecyclerView.ViewHolder(view) {
@@ -48,8 +49,14 @@ class RowAdapter(
 
         holder.title.text = row.title
         holder.subtitle.text = row.subtitle
-        holder.action.text = actionLabel
-        holder.action.setOnClickListener { onActionClick(row.key) }
+        val hasAction = actionLabel != null && onActionClick != null
+        holder.action.visibility = if (hasAction) View.VISIBLE else View.GONE
+        if (hasAction) {
+            holder.action.text = actionLabel
+            holder.action.setOnClickListener { onActionClick?.invoke(row.key) }
+        } else {
+            holder.action.setOnClickListener(null)
+        }
 
         // setOnClickListener always marks a view clickable, so set isClickable afterwards.
         holder.itemView.setOnClickListener(onRowClick?.let { callback ->
