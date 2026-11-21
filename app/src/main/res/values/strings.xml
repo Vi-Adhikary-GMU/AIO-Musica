@@ -45,10 +45,12 @@
     <string name="stem_unmute">Unmute</string>
     <string name="stem_export_description">Export %1$s stem</string>
     <string name="stem_export_title">Export stem?</string>
-    <string name="stem_export_message">Download the %1$s stem to your device?</string>
+    <string name="stem_export_message">Save the %1$s stem to a location you choose?</string>
     <string name="stem_export_confirm">Export</string>
-    <string name="stem_export_started">Exporting %1$s…</string>
     <string name="stem_volume">Volume</string>
+    <string name="stem_separate_button">Separate current song</string>
+    <string name="stem_separate_no_song">Pick a song in the Original tab first.</string>
+    <string name="stem_empty">No stems yet. Separate the current song to see them.</string>
 
     <!-- Original music player. -->
     <string name="player_no_song">No song selected</string>
