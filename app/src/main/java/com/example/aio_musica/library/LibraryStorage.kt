@@ -12,7 +12,10 @@ class LibraryStorage(context: Context) {
 
     private val file = File(context.filesDir, "library.json")
 
-    // Save the library to a JSON file
+    /**
+     * Saves the library to a JSON File
+     * @param library is the library object we need to save
+     */
     fun save(library: Library) {
         val data = JSONObject()
         val songs = JSONArray()
@@ -62,7 +65,10 @@ class LibraryStorage(context: Context) {
         }
     }
 
-    // Load the saved library
+    /**
+     * Going to load the JSON file back into our library object
+     * @return a library object with the saved values from previous runs.
+     */
     fun load(): Library {
         val library = Library()
 

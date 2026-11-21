@@ -2,6 +2,7 @@ package com.example.aio_musica.library
 import java.sql.Timestamp
 
 /**
+ * The playlist class which will represent a playlist object
  * Some things to note / Design consideration. We should never call setName on a playlist object directly but should always do it through library object.
  */
 
@@ -53,6 +54,7 @@ class Playlist(
 
     /**
      * Getter to get the name of the playlist
+     * @return playlist name
      */
     fun getName(): String = name
 
@@ -66,11 +68,13 @@ class Playlist(
 
     /**
      * A way to get when the playlist was created
+     * @return Timestamp object of when it was created
      */
     fun getDateCreated(): Timestamp = dateCreated
 
     /**
      * A way to get back all the songIDs
+     * @return a list of all the song ids
      */
     fun getSongIDs(): List<String> = songIDs.toList()
 }
