@@ -11,18 +11,18 @@ import org.junit.Before
 
 // All the tests for add song method of playlist
 
-// Uri is an Android class, so we mock it for plain JVM unit tests
-private fun makeSong(id: String) = Song(
-    id = id,
-    title = "Title $id",
-    uri = mockk<Uri>(),
-    mimeType = "audio/mpeg"
-)
+class PlaylistUnitTest {
+    // Uri is an Android class, so we mock it for plain JVM unit tests
+    private fun makeSong(id: String) = Song(
+        id = id,
+        title = "Title $id",
+        uri = mockk<Uri>(),
+        mimeType = "audio/mpeg"
+    )
 
-class AddSongPlayList{
+
     private lateinit var library: Library
     private lateinit var playlist: Playlist
-
 
 
     // Runs before every test so each test starts with a fresh library and playlist
@@ -78,17 +78,10 @@ class AddSongPlayList{
             playlist.addSong(song)
         }
     }
-}
 
-class RemoveSongPlaylist{
-    private lateinit var library: Library
-    private lateinit var playlist: Playlist
 
-    @Before
-    fun setUp() {
-        library = Library()
-        playlist = Playlist("Driving to GMU", library)
-    }
+
+
 
     // first test: add one song to library and playlist, remove it, size should be 0
     @Test
@@ -138,14 +131,13 @@ class RemoveSongPlaylist{
             playlist.removeSong(song)
         }
     }
-}
 
-class ResetPlaylist{
+
+
     // add song to library and playlist, call reset, size should be 0
     @Test
     fun reset_playlistWithSong_playlistIsEmpty() {
-        val library = Library()
-        val playlist = Playlist("Driving to gmu", library)
+
         val song = makeSong("1")
         library.addSong(song)
         playlist.addSong(song)
@@ -154,10 +146,10 @@ class ResetPlaylist{
 
         assertEquals(0, playlist.getSongIDs().size)
     }
+
     @Test
     fun reset_playlistWithMultipleSongs_playlistIsEmpty() {
-        val library = Library()
-        val playlist = Playlist("Driving", library)
+
         val song1 = makeSong("1")
         val song2 = makeSong("2")
 
@@ -170,8 +162,9 @@ class ResetPlaylist{
 
         assertTrue(playlist.getSongIDs().isEmpty())
     }
-}
-class GetNamePlaylist{
+
+
+
     // creating a playlist and getting the name gives back what we passed in
     @Test
     fun getName_returnsNameGivenAtCreation() {
@@ -179,8 +172,9 @@ class GetNamePlaylist{
 
         assertEquals("Driving", playlist.getName())
     }
-}
-class SetNamePlaylist{
+
+
+
     // change the name with setName, then getName should return the new name
     @Test
     fun setName_changesName() {
@@ -190,9 +184,9 @@ class SetNamePlaylist{
 
         assertEquals("Workout", playlist.getName())
     }
-}
 
-class GetTimePlaylist{
+
+
     // creating a playlist should set the creation time, somewhere between just before and just after creation
     @Test
     fun getDateCreated_isSetAtCreation() {
@@ -206,16 +200,10 @@ class GetTimePlaylist{
         assertTrue(created.time >= before)
         assertTrue(created.time <= after)
     }
-}
-class GetSongIDsPlaylist{
-    private lateinit var library: Library
-    private lateinit var playlist: Playlist
 
-    @Before
-    fun setUp() {
-        library = Library()
-        playlist = Playlist("Gym", library)
-    }
+
+
+
 
     // first test: new playlist has no songs
     @Test
@@ -248,6 +236,7 @@ class GetSongIDsPlaylist{
         assertTrue(ids.contains("1"))
         assertTrue(ids.contains("2"))
     }
+
     //fourth test
     @Test
     fun getSongIDs_modifyingReturnedList_doesNotChangePlaylist() {
@@ -261,4 +250,6 @@ class GetSongIDsPlaylist{
         assertEquals(listOf("1"), ids)
         assertEquals(listOf("1"), playlist.getSongIDs())
     }
+
+
 }
