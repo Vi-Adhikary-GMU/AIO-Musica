@@ -115,15 +115,17 @@ class MvsepDownloader(
                         ?.takeIf { it.isNotBlank() }
                         ?: "stem_${index + 1}"
                     val extension = getAudioExtension(url)
-                    val safeName = originalName
+                    val sanitizedName = originalName
                         .substringBeforeLast(".")
                         .replace(
                             Regex("[^a-zA-Z0-9_-]"),
                             "_"
                         )
-                        .ifBlank {
-                            "stem_${index + 1}"
+                    val safeName = sanitizedName
+                        .takeIf { name ->
+                            name.any { it.isLetterOrDigit() }
                         }
+                        ?: "stem_${index + 1}"
                     val outputFile = getUniqueFile(
                         directory = destinationDir,
                         name = safeName,
