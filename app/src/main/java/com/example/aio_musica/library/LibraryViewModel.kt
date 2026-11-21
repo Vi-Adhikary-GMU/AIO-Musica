@@ -14,8 +14,9 @@ import kotlinx.coroutines.flow.asStateFlow
  * The functions that change something return an error message to show the user,
  * or null when everything worked.
  *
- * Shared through `activityViewModels()` so the playlist list and a single playlist's
+ * Shared through activityViewModels() so the playlist list and a single playlist's
  * screen look at the same data.
+ * @param application the application used to initialize the ViewModel
  */
 class LibraryViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -56,6 +57,7 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
 
     /**
      * Deletes a playlist. The songs stay in the library.
+     * @param name is the name of the playlist we want to delete
      * @return an error message, or null on success
      */
     fun deletePlaylist(name: String): String? {
@@ -90,6 +92,8 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
 
     /**
      * Removes a song from a playlist (the song stays in the library).
+     * @param playlistName is a string representing the name of a playlist
+     * @param songId is the id of the song to remove
      * @return an error message, or null on success
      */
     fun removeSong(playlistName: String, songId: String): String? {
@@ -105,17 +109,24 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
         persist()
         return null
     }
-
+    /**
+     * Function to save the library to Storage
+     */
     private fun persist() {
         storage.save(library)
         publish()
     }
 
+    /**
+     * Function to take a snapshot of the library
+     */
     private fun publish() {
         _state.value = snapshot()
     }
 
-    /** Copies the current library into plain immutable objects for the UI. */
+    /** Copies the current library into plain immutable objects for the UI. 
+     * @return a LibraryState object which represents what the UI will display
+     */
     private fun snapshot(): LibraryState {
         val playlists = library.getPlaylists().values
             .sortedBy { it.getDateCreated().time }
@@ -126,7 +137,12 @@ class LibraryViewModel(application: Application) : AndroidViewModel(application)
             playlists = playlists
         )
     }
-
+    /**
+     * Retrieves a formatted string from the application's string resources.
+     * @param resId the resource ID of the string
+     * @param args the arguments used to format the string
+     * @return the formatted string
+     */
     private fun string(resId: Int, vararg args: Any): String =
         getApplication<Application>().getString(resId, *args)
 }

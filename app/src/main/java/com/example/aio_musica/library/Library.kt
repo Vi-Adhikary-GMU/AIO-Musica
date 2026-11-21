@@ -106,16 +106,19 @@ class Library {
 
     /**
      * Getter for songs map
+     * @return map of songs
      */
     fun getSongs(): Map<String, Song> = songs.toMap()
 
     /**
      * Getter for playlist map
+     * @return the playlist
      */
     fun getPlaylists(): Map<String, Playlist> = playlists.toMap()
     /**
      * Checks whether a song with the given id is in the library
      * @param songId the id of the song to look for
+     * @return true if the song exists in the library, false otherwise
      */
     fun containsSong(songId: String): Boolean = songs.containsKey(songId)
 

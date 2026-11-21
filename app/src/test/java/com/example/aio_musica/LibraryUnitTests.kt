@@ -114,6 +114,26 @@ class removeSongLibrary{
         assertEquals(0, playlist1.getSongIDs().size)
         assertEquals(0, playlist2.getSongIDs().size)
     }
+    // test5: song is in one playlist but not the other
+    // removing it should only affect the playlist containing it
+    @Test
+    fun removeSong_songNotInEveryPlaylist_onlyRemovesFromMatchingPlaylist() {
+        val song = makeSong("1")
+        library.addSong(song)
+
+        val playlist1 = Playlist("Eating Playlist", library)
+        val playlist2 = Playlist("Workout", library)
+
+        library.addPlaylist(playlist1)
+        library.addPlaylist(playlist2)
+
+        playlist1.addSong(song)
+
+        library.removeSong(song)
+
+        assertEquals(0, playlist1.getSongIDs().size)
+        assertEquals(0, playlist2.getSongIDs().size)
+    }
 }
 
 class addPlaylistLibrary{
