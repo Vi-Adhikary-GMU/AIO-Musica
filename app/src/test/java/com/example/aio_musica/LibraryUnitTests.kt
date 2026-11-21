@@ -9,16 +9,18 @@ import android.net.Uri
 import io.mockk.mockk
 import org.junit.Before
 
-// Shared helper: Uri is an Android class, so we mock it for plain JVM unit tests
-private fun makeSong(id: String) = Song(
-    id = id,
-    title = "Title $id",
-    uri = mockk<Uri>(),
-    mimeType = "audio/mpeg"
-)
+
+class LibraryUnitTests {
+    // Shared helper: Uri is an Android class, so we mock it for plain JVM unit tests
+    private fun makeSong(id: String) = Song(
+        id = id,
+        title = "Title $id",
+        uri = mockk<Uri>(),
+        mimeType = "audio/mpeg"
+    )
 
 
-class AddSongLibrary{
+
     private lateinit var library: Library
 
     @Before
@@ -53,15 +55,8 @@ class AddSongLibrary{
             library.addSong(song)
         }
     }
-}
 
-class removeSongLibrary{
-    private lateinit var library: Library
 
-    @Before
-    fun setUp() {
-        library = Library()
-    }
 
     // test1: add song then remove it, length should be 0
     @Test
@@ -114,6 +109,7 @@ class removeSongLibrary{
         assertEquals(0, playlist1.getSongIDs().size)
         assertEquals(0, playlist2.getSongIDs().size)
     }
+
     // test5: song is in one playlist but not the other
     // removing it should only affect the playlist containing it
     @Test
@@ -134,15 +130,8 @@ class removeSongLibrary{
         assertEquals(0, playlist1.getSongIDs().size)
         assertEquals(0, playlist2.getSongIDs().size)
     }
-}
 
-class addPlaylistLibrary{
-    private lateinit var library: Library
 
-    @Before
-    fun setUp() {
-        library = Library()
-    }
 
     // test1: add a playlist, length should be 1
     @Test
@@ -171,15 +160,10 @@ class addPlaylistLibrary{
             library.addPlaylist(playlist)
         }
     }
-}
 
-class removePlaylistLibrary{
-    private lateinit var library: Library
 
-    @Before
-    fun setUp() {
-        library = Library()
-    }
+
+
 
     // test1: add a playlist then remove it, length should be 0
     @Test
@@ -216,15 +200,10 @@ class removePlaylistLibrary{
             library.removePlaylist(other)
         }
     }
-}
 
-class renamePlaylistLibrary{
-    private lateinit var library: Library
 
-    @Before
-    fun setUp() {
-        library = Library()
-    }
+
+
 
     // test1: rename a playlist, it should have the new name and be stored under the new name
     @Test
@@ -261,8 +240,9 @@ class renamePlaylistLibrary{
             library.renamePlaylist("Workout", playlist)
         }
     }
-}
-class clearMapOfSongsLibrary{
+
+
+
     // add three songs, clear, size should be 0
     @Test
     fun clearSongs_threeSongs_libraryIsEmpty() {
@@ -275,8 +255,9 @@ class clearMapOfSongsLibrary{
 
         assertEquals(0, library.getSongs().size)
     }
-}
-class clearPlaylistLibrary{
+
+
+
     // add three playlists, clear, size should be 0
     @Test
     fun clearPlaylists_threePlaylists_libraryIsEmpty() {
@@ -289,8 +270,9 @@ class clearPlaylistLibrary{
 
         assertEquals(0, library.getPlaylists().size)
     }
-}
-class getSongsLibrary{
+
+
+
     // add three songs, all three ids should be in the map we get back
     @Test
     fun getSongs_threeSongs_containsAllIds() {
@@ -305,8 +287,9 @@ class getSongsLibrary{
         assertTrue(songs.containsKey("2"))
         assertTrue(songs.containsKey("3"))
     }
-}
-class getPlayListLibrary{
+
+
+
     // add three playlists, all three names should be in the map we get back
     @Test
     fun getPlaylists_threePlaylists_containsAllNames() {
@@ -321,8 +304,9 @@ class getPlayListLibrary{
         assertTrue(playlists.containsKey("Two"))
         assertTrue(playlists.containsKey("Three"))
     }
-}
-class containsSongLibrary{
+
+
+
     // add a song, containsSong should be true
     @Test
     fun containsSong_oneSongAdded_returnsTrue() {
@@ -350,4 +334,6 @@ class containsSongLibrary{
 
         assertFalse(library.containsSong("1"))
     }
+
+
 }
