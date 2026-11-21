@@ -6,4 +6,9 @@
     </style>
 
     <style name="Theme.AIOMusica" parent="Base.Theme.AIOMusica" />
+    <style name="Theme.AIOMusica.Starting" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">#A8415B</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/aio_splash_blank</item>
+        <item name="postSplashScreenTheme">@style/Theme.AIOMusica</item>
+    </style>
 </resources>

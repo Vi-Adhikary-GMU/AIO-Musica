@@ -5,6 +5,10 @@
     <string name="status_idle">Choose a song from your device to add it to AIO-Musica.</string>
     <string name="status_uploading">Adding file… %1$d%%</string>
     <string name="status_complete">Added %1$s</string>
+
+    <!-- Splash Screen Branding -->
+    <string name="splash_title">AIO MUSICA</string>
+
     <string name="library">Library</string>
     <string name="playlist">Playlist</string>
     <string name="music">Music</string>
@@ -46,5 +50,15 @@
     <string name="stem_export_started">Exporting %1$s…</string>
     <string name="stem_volume">Volume</string>
 
+    <!-- Original music player. -->
+    <string name="player_no_song">No song selected</string>
+    <string name="player_unknown_artist">Unknown Artist</string>
+    <string name="player_previous">Prev</string>
+    <string name="player_play">Play</string>
+    <string name="player_pause">Pause</string>
+    <string name="player_next">Next</string>
+
+    <string name="mixer_empty_message">No separated tracks yet</string>
+    <string name="player_load_error">Unable to play this song.</string>
 
 </resources>
