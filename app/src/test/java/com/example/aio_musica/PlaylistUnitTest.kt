@@ -154,6 +154,22 @@ class ResetPlaylist{
 
         assertEquals(0, playlist.getSongIDs().size)
     }
+    @Test
+    fun reset_playlistWithMultipleSongs_playlistIsEmpty() {
+        val library = Library()
+        val playlist = Playlist("Driving", library)
+        val song1 = makeSong("1")
+        val song2 = makeSong("2")
+
+        library.addSong(song1)
+        library.addSong(song2)
+        playlist.addSong(song1)
+        playlist.addSong(song2)
+
+        playlist.reset()
+
+        assertTrue(playlist.getSongIDs().isEmpty())
+    }
 }
 class GetNamePlaylist{
     // creating a playlist and getting the name gives back what we passed in
@@ -231,5 +247,18 @@ class GetSongIDsPlaylist{
 
         assertTrue(ids.contains("1"))
         assertTrue(ids.contains("2"))
+    }
+    //fourth test
+    @Test
+    fun getSongIDs_modifyingReturnedList_doesNotChangePlaylist() {
+        val song = makeSong("1")
+        library.addSong(song)
+        playlist.addSong(song)
+
+        val ids = playlist.getSongIDs()
+
+        // The returned list is a snapshot, not the original list.
+        assertEquals(listOf("1"), ids)
+        assertEquals(listOf("1"), playlist.getSongIDs())
     }
 }
