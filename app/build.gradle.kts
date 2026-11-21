@@ -1,3 +1,15 @@
+import java.util.Properties
+
+val localProperties = Properties().apply {
+    val file = rootProject.file("local.properties")
+
+    if (file.exists()) {
+        file.inputStream().use {
+            load(it)
+        }
+    }
+}
+
 plugins {
     alias(libs.plugins.android.application)
 }
@@ -8,6 +20,10 @@ android {
         version = release(37)
     }
 
+    buildFeatures {
+        buildConfig = true
+    }
+
     defaultConfig {
         applicationId = "com.example.aio_musica"
         minSdk = 24
@@ -16,6 +32,14 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        val mvsepToken = project.findProperty("MVSEP_API_TOKEN") as String? ?: ""
+
+        buildConfigField(
+            "String",
+            "MVSEP_API_TOKEN",
+            "\"$mvsepToken\""
+        )
     }
 
     buildTypes {
@@ -44,5 +68,10 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.junit)
     testImplementation("io.mockk:mockk:1.13.12")
+    implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.retrofit)
+    implementation(libs.retrofit.converter.gson)
+    implementation(libs.okhttp)
+    implementation(libs.okhttp.logging)
 
 }
