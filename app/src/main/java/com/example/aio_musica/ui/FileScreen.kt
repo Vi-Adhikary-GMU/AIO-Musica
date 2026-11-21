@@ -120,7 +120,7 @@ class FileScreen : Fragment() {
         cancelButton.isVisible = state.isUploading
 
         val percent = (state.progress * 100).toInt().coerceIn(0, 100)
-        progressIndicator.isInvisible = !(state.isUploading || state.isUploadComplete)
+        progressIndicator.isInvisible = !state.isUploading
         progressIndicator.setProgressCompat(percent, true)
 
         statusText.text = when {
