@@ -498,4 +498,82 @@ class MvsepRepositoryTest {
             return statusResponses.removeAt(0)
         }
     }
+
+    @Test
+    fun `separate song handles successful creation with null data`() = runTest {
+        api.creationResponse = MvsepCreateResponse(
+            success = true,
+            data = null
+        )
+        try {
+            repository.separateSong(audioFile)
+            fail("Expected IOException")
+        } catch (e: IOException) {
+            assertEquals(
+                "MVSEP did not return a valid separation hash.",
+                e.message
+            )
+        }
+        assertEquals(0, api.statusCalls)
+    }
+
+    @Test
+    fun `separate song handles completed status with null data`() = runTest {
+        api.statusResponses.add(
+            MvsepStatusResponse(
+                success = true,
+                status = "done",
+                data = null
+            )
+        )
+        try {
+            repository.separateSong(audioFile)
+            fail("Expected IOException")
+        } catch (e: IOException) {
+            assertEquals(
+                "Separation completed, but no valid output files were found.",
+                e.message
+            )
+        }
+    }
+
+    @Test
+    fun `separate song handles unsuccessful status with null data`() = runTest {
+        api.statusResponses.add(
+            MvsepStatusResponse(
+                success = false,
+                status = "processing",
+                data = null
+            )
+        )
+        try {
+            repository.separateSong(audioFile)
+            fail("Expected IOException")
+        } catch (e: IOException) {
+            assertEquals(
+                "Could not retrieve separation status.",
+                e.message
+            )
+        }
+    }
+
+    @Test
+    fun `separate song handles failed status with null data`() = runTest {
+        api.statusResponses.add(
+            MvsepStatusResponse(
+                success = true,
+                status = "failed",
+                data = null
+            )
+        )
+        try {
+            repository.separateSong(audioFile)
+            fail("Expected IOException")
+        } catch (e: IOException) {
+            assertEquals(
+                "MVSEP audio separation failed.",
+                e.message
+            )
+        }
+    }
 }

@@ -415,4 +415,139 @@ class MvsepDownloaderTest {
             assertTrue(true)
         }
     }
+
+
+    @Test
+    fun `download handles uppercase HTTPS scheme`() = runBlocking {
+        server.enqueue(MockResponse().setBody("audio"))
+        val original = stem("vocals", "/vocals.wav")
+        val uppercaseUrl = original.url!!.replaceFirst("https", "HTTPS")
+        val result = downloader.downloadStems(
+            listOf(MvsepStem("vocals", null, uppercaseUrl)),
+            tempDirectory
+        )
+        assertEquals(1, result.size)
+        assertTrue(result[0].file.exists())
+    }
+
+    @Test
+    fun `download uses fallback for filename containing only underscores`() =
+        runBlocking {
+            server.enqueue(MockResponse().setBody("audio"))
+            val result = downloader.downloadStems(
+                listOf(stem("___", "/audio.wav")),
+                tempDirectory
+            )
+            assertEquals("stem_1", result[0].name)
+        }
+
+    @Test
+    fun `download handles multiple existing filenames`() = runBlocking {
+        File(tempDirectory, "vocals.wav").writeText("original 1")
+        File(tempDirectory, "vocals_2.wav").writeText("original 2")
+        server.enqueue(MockResponse().setBody("new audio"))
+        val result = downloader.downloadStems(
+            listOf(stem("vocals", "/vocals.wav")),
+            tempDirectory
+        )
+        assertEquals("vocals_3.wav", result[0].file.name)
+        assertEquals("original 1", File(tempDirectory, "vocals.wav").readText())
+        assertEquals("original 2", File(tempDirectory, "vocals_2.wav").readText())
+    }
+
+    @Test
+    fun `download handles empty response body`() = runBlocking {
+        server.enqueue(MockResponse().setBody(""))
+        val result = downloader.downloadStems(
+            listOf(stem("vocals", "/vocals.wav")),
+            tempDirectory
+        )
+        assertEquals(1, result.size)
+        assertTrue(result[0].file.exists())
+        assertEquals(0L, result[0].file.length())
+    }
+
+    @Test
+    fun `download uses filename without existing extension`() = runBlocking {
+        server.enqueue(MockResponse().setBody("audio"))
+        val result = downloader.downloadStems(
+            listOf(stem("vocals.mp3", "/vocals.wav")),
+            tempDirectory
+        )
+        assertEquals("vocals", result[0].name)
+        assertEquals("vocals.wav", result[0].file.name)
+    }
+
+    @Test
+    fun `download handles uppercase audio extension`() = runBlocking {
+        server.enqueue(MockResponse().setBody("audio"))
+        val result = downloader.downloadStems(
+            listOf(stem("vocals", "/vocals.MP3")),
+            tempDirectory
+        )
+        assertEquals("mp3", result[0].file.extension)
+    }
+
+    @Test
+    fun `download falls back to wav when URL has no extension`() = runBlocking {
+        server.enqueue(MockResponse().setBody("audio"))
+        val result = downloader.downloadStems(
+            listOf(stem("vocals", "/download")),
+            tempDirectory
+        )
+        assertEquals("vocals.wav", result[0].file.name)
+    }
+
+    @Test
+    fun `download cleans earlier files when second stem has missing URL`() {
+        server.enqueue(MockResponse().setBody("vocals"))
+        val stems = listOf(
+            stem("vocals", "/vocals.wav"),
+            MvsepStem("bass", null, null)
+        )
+        try {
+            runBlocking {
+                downloader.downloadStems(stems, tempDirectory)
+            }
+            fail("Expected IOException")
+        } catch (e: IOException) {
+            assertTrue(e.message!!.contains("Missing download URL"))
+            assertFalse(File(tempDirectory, "vocals.wav").exists())
+        }
+    }
+
+    @Test
+    fun `download cleans earlier files when second URL is insecure`() {
+        server.enqueue(MockResponse().setBody("vocals"))
+        val stems = listOf(
+            stem("vocals", "/vocals.wav"),
+            MvsepStem("bass", null, "http://example.com/bass.wav")
+        )
+
+        try {
+            runBlocking {
+                downloader.downloadStems(stems, tempDirectory)
+            }
+            fail("Expected IllegalArgumentException")
+        } catch (e: IllegalArgumentException) {
+            assertTrue(e.message!!.contains("Invalid or insecure"))
+            assertFalse(File(tempDirectory, "vocals.wav").exists())
+        }
+    }
+
+    @Test
+    fun `download handles HTTP 404`() {
+        server.enqueue(MockResponse().setResponseCode(404))
+        try {
+            runBlocking {
+                downloader.downloadStems(
+                    listOf(stem("vocals", "/missing.wav")),
+                    tempDirectory
+                )
+            }
+            fail("Expected IOException")
+        } catch (e: IOException) {
+            assertTrue(e.message!!.contains("HTTP 404"))
+        }
+    }
 }
