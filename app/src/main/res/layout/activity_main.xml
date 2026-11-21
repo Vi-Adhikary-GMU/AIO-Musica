@@ -36,7 +36,7 @@
         android:id="@+id/brandingOverlay"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:background="#A8415B"
+        android:background="#FFFFFF"
         android:clickable="true"
         android:focusable="true"
         app:layout_constraintTop_toTopOf="parent"
@@ -44,16 +44,37 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-        <TextView
-            android:id="@+id/brandingTitle"
+
+        <!-- Center the logo and title vertically. -->
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:text="@string/splash_title"
-            android:textSize="40sp"
-            android:textStyle="bold"
-            android:textColor="@android:color/white"
-            android:letterSpacing="0.05" />
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <!-- Logo displayed at a random rotation on startup. -->
+            <ImageView
+                android:id="@+id/brandingLogo"
+                android:layout_width="150dp"
+                android:layout_height="150dp"
+                android:layout_marginBottom="20dp"
+                android:src="@drawable/aio_splash_logo"
+                android:contentDescription="@null" />
+
+            <!-- Application title. -->
+            <TextView
+                android:id="@+id/brandingTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/splash_title"
+                android:textSize="40sp"
+                android:textStyle="bold"
+                android:textColor="@android:color/black"
+                android:letterSpacing="0.05" />
+
+        </LinearLayout>
+
     </FrameLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

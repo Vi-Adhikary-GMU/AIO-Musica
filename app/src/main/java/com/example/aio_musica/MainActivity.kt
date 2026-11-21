@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.View
 import android.widget.FrameLayout
 import android.widget.TextView
+import android.widget.ImageView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.ViewCompat
@@ -104,38 +105,40 @@ class MainActivity : AppCompatActivity() {
     }
 
     /**
-     * Displays AIO Musica's startup branding animation.
+     * Displays the AIO Musica startup branding animation.
      *
-     * The title starts invisible, fades into view, remains
-     * visible briefly, then fades out with its overlay to
-     * reveal the application's main interface.
+     * Randomly rotates the logo to one of five preset angles
+     * (0, 15, 30, 45, or 60 degrees) on each initial launch.
+     * The logo and title fade into view together, remain visible,
+     * and then fade out to reveal the main application.
      *
-     * Precondition: activity_main.xml has been loaded and
-     * contains brandingOverlay and brandingTitle.
-     *
-     * Postcondition: The branding overlay becomes hidden
-     * after the animation completes.
+     * Precondition: The main layout and branding views are loaded.
+     * Postcondition: The branding overlay is hidden after animation.
      */
     private fun showBrandingAnimation() {
         val overlay = findViewById<FrameLayout>(R.id.brandingOverlay)
         val title = findViewById<TextView>(R.id.brandingTitle)
+        val logo = findViewById<ImageView>(R.id.brandingLogo)
 
-        // Initially hide the application title.
+        // Pick a random logo rotation for this startup.
+        logo.rotation = listOf(0f, 15f, 30f, 45f, 60f).random()
+
+        // Start with both branding elements invisible.
         title.alpha = 0f
+        logo.alpha = 0f
 
-        // Fade the title into view.
-        title.animate().alpha(1f).setDuration(600L).withEndAction {
+        // Fade in the logo and title.
+        logo.animate().alpha(1f).setDuration(700L).start()
+        title.animate().alpha(1f).setDuration(700L).withEndAction {
 
-            // Briefly display the title before fading out.
+            // Hold the branding briefly before fading out.
             overlay.postDelayed({
-
-                // Reveal the main application interface.
-                overlay.animate().alpha(0f).setDuration(400L)
+                overlay.animate().alpha(0f).setDuration(1000L)
                     .withEndAction {
                         overlay.visibility = View.GONE
                     }.start()
-
-            }, 600L)
+            }, 1000L)
         }.start()
     }
-}
+    }
+
