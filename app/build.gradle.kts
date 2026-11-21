@@ -33,7 +33,7 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        val mvsepToken = project.findProperty("MVSEP_API_TOKEN") as String? ?: ""
+        val mvsepToken = localProperties.getProperty("MVSEP_API_TOKEN") ?: ""
 
         buildConfigField(
             "String",

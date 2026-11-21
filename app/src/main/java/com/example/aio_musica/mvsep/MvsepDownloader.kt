@@ -9,7 +9,6 @@ import java.io.File
 import java.io.IOException
 import java.net.URI
 import java.util.Locale
-import kotlin.coroutines.coroutineContext
 
 /**
  * Represents an audio stem successfully downloaded from MVSEP.
@@ -112,8 +111,7 @@ class MvsepDownloader(
                         )
                     }
                     val body = response.body
-                        ?: throw IOException("Empty audio response")
-                    val originalName = stem.name
+                    val originalName = (stem.name ?: stem.type)
                         ?.takeIf { it.isNotBlank() }
                         ?: "stem_${index + 1}"
                     val extension = getAudioExtension(url)

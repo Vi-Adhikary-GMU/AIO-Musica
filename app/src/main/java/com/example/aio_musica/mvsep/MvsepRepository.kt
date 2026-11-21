@@ -60,8 +60,8 @@ class MvsepRepository(
             )
             // Prepare API parameters.
             val tokenBody = apiToken.toRequestBody()
-            val typeBody = "28".toRequestBody()
-            val formatBody = "1".toRequestBody()
+            val typeBody = "63".toRequestBody()
+            val formatBody = "0".toRequestBody()
             // Submit audio separation request.
             val response = api.createSeparation(
                 tokenBody,
@@ -139,7 +139,7 @@ class MvsepRepository(
         } catch (e: Exception) {
             // Convert unexpected network or API exceptions.
             throw IOException(
-                "An error occurred while communicating with MVSEP.",
+                "An error occurred while communicating with MVSEP",
                 e
             )
         }
