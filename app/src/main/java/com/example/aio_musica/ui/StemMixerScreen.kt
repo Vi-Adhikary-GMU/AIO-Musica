@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.Lifecycle
@@ -33,6 +34,7 @@ class StemMixerScreen : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         stemList = view.findViewById(R.id.stemList)
+        val emptyMessage = view.findViewById<TextView>(R.id.mixerEmptyMessage)
 
         adapter = StemAdapter(
             onVolumeChange = { id, volume -> viewModel.setVolume(id, volume) },
@@ -44,7 +46,13 @@ class StemMixerScreen : Fragment() {
 
         viewLifecycleOwner.lifecycleScope.launch {
             viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.stems.collect { adapter.submitList(it) }
+                // Update the mixer controls and show a message when no stems exist.
+                viewModel.stems.collect { stems ->
+                    adapter.submitList(stems)
+
+                    emptyMessage.visibility =
+                        if (stems.isEmpty()) View.VISIBLE else View.GONE
+                }
             }
         }
     }

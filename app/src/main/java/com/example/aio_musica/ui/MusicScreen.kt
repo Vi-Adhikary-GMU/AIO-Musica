@@ -39,6 +39,7 @@ class MusicScreen : Fragment() {
         fun showMixer(show: Boolean) {
             originalContent.visibility = if (show) View.GONE else View.VISIBLE
             mixerContainer.visibility = if (show) View.VISIBLE else View.GONE
+
         }
 
         tabs.addOnTabSelectedListener(object : TabLayout.OnTabSelectedListener {
