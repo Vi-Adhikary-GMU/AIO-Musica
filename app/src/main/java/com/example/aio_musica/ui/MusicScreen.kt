@@ -32,6 +32,7 @@ import com.google.android.material.tabs.TabLayout
 class MusicScreen : Fragment() {
 
     private val libraryViewModel: LibraryViewModel by activityViewModels()
+    private val stemMixerViewModel: StemMixerViewModel by activityViewModels()
 
     private var songs: List<Song> = emptyList()
     private var mediaPlayer: MediaPlayer? = null
@@ -266,6 +267,9 @@ class MusicScreen : Fragment() {
             mediaPlayer = player
             selectedSongId = song.id
 
+            // Tell the Mixer which song it can separate.
+            stemMixerViewModel.setCurrentSong(song)
+
             songProgress.max = player.duration.coerceAtLeast(0)
             songProgress.isEnabled = true
 
@@ -344,6 +348,7 @@ class MusicScreen : Fragment() {
         mediaPlayer?.release()
         mediaPlayer = null
         selectedSongId = null
+        stemMixerViewModel.setCurrentSong(null)
 
         songProgress.progress = 0
         songProgress.max = 0

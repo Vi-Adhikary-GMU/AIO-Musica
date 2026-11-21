@@ -74,6 +74,7 @@ data class MvsepResultData(
  * instrumental, drums, bass, or another separated audio component.
  *
  * @property name Name or category of the generated audio stem.
+ * @property type Type of audio stem.
  * @property url Download URL for the generated audio stem.
  */
 data class MvsepStem(
