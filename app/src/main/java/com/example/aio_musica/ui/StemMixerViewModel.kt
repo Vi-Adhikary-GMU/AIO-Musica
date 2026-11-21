@@ -9,6 +9,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.aio_musica.mvsep.MvsepRepository
 import com.example.aio_musica.mvsep.MvsepDownloader
 import com.example.aio_musica.library.Song
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import android.content.ContentResolver
@@ -29,17 +30,22 @@ data class StemState(
     val audioFile: File? = null
 )
 
-class StemMixerViewModel : ViewModel() {
+class StemMixerViewModel(
+    /**
+     * Downloader for saving separated audio files. Passed in so unit tests can replace it.
+     */
+    private val downloader: MvsepDownloader = MvsepDownloader(),
+    /**
+     * Dispatcher used for file copying. Unit tests pass a test dispatcher.
+     */
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO
+) : ViewModel() {
 
     /**
      * Repository for MVSEP API operations.
      */
     private var mvsepRepository: MvsepRepository? = null
 
-    /**
-     * Downloader for saving separated audio files.
-     */
-    private val downloader = MvsepDownloader()
     /**
      * Active separation coroutine.
      */
@@ -155,10 +161,7 @@ class StemMixerViewModel : ViewModel() {
                         muted = isInstrumental(stem.name),
                         audioFile = stem.file
                     )
-                }.sortedBy { stem ->
-                    val n = stem.name.lowercase()
-                    stemOrder.indexOfFirst { it in n }.takeIf { it >= 0 } ?: stemOrder.size
-                }
+                }.sortedBy { orderOf(it.name) }
                 _status.value = "Separation complete!"
             } catch (e: CancellationException) {
                 _status.value = "Separation cancelled"
@@ -218,6 +221,15 @@ class StemMixerViewModel : ViewModel() {
 
     private fun isInstrumental(name: String) = "instrum" in name.lowercase()
 
+    /** Position of a stem in the display order. Unknown names go last. */
+    private fun orderOf(name: String): Int {
+        val n = name.lowercase()
+        for ((index, key) in stemOrder.withIndex()) {
+            if (key in n) return index
+        }
+        return stemOrder.size
+    }
+
     /** The stems that are already inside Instrumental (everything except vocals). */
     private fun isBackingStem(name: String): Boolean {
         val n = name.lowercase()
@@ -253,7 +265,7 @@ class StemMixerViewModel : ViewModel() {
         viewModelScope.launch {
             _status.value = "Exporting ${file.name}..."
             try {
-                withContext(Dispatchers.IO) {
+                withContext(ioDispatcher) {
                     val output = resolver.openOutputStream(destination)
                         ?: throw IOException("Could not open the chosen location.")
                     output.use { out ->
