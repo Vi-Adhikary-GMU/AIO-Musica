@@ -8,9 +8,6 @@ import android.net.Uri
  * Plays all separated stems at the same time, one MediaPlayer per stem.
  * Each stem's volume comes from its [StemState] (muted = silent), so moving a slider
  * or tapping Mute changes what you hear right away.
- *
- * Note: MediaPlayers are started one after another, so stems can drift by a few
- * milliseconds. That is fine for a first version.
  */
 class StemPlayer {
 
