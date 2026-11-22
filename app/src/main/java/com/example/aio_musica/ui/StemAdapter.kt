@@ -73,9 +73,12 @@ class StemAdapter(
         holder.export.contentDescription = context.getString(R.string.stem_export_description, stem.name)
         holder.export.setOnClickListener { onExportClick(stem) }
 
-        // Dim the slider while muted; the volume value is kept so unmuting restores it.
+        // Muted stems can't be adjusted; the volume value is kept so unmuting restores it.
+        holder.slider.isEnabled = !stem.muted
         holder.slider.alpha = if (stem.muted) 0.4f else 1f
 
+        // If the stem got muted mid-drag, the touch is dropped, so reset the flag.
+        if (stem.muted) holder.dragging = false
 
         if (!holder.dragging) {
             val target = (stem.volume * 100f).roundToInt().toFloat()
