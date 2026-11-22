@@ -3,13 +3,11 @@ package com.example.aio_musica.ui
 import android.content.Context
 import android.media.MediaPlayer
 import android.net.Uri
-import android.util.Log
 
 /**
  * Plays all separated stems at the same time, one MediaPlayer per stem.
  * Each stem's volume comes from its [StemState] (muted = silent), so moving a slider
  * or tapping Mute changes what you hear right away.
- *
  */
 class StemPlayer {
 
@@ -25,7 +23,14 @@ class StemPlayer {
 
     /** Length of the longest stem in milliseconds. */
     val duration: Int
-        get() = players.values.maxOfOrNull { it.duration } ?: 0
+        get() {
+            var longest = 0
+            for (mediaPlayer in players.values) {
+                val length = mediaPlayer.duration
+                if (length > longest) longest = length
+            }
+            return longest
+        }
 
     val position: Int
         get() = players.values.firstOrNull()?.currentPosition ?: 0
@@ -36,12 +41,10 @@ class StemPlayer {
     /** Replaces the loaded stems. Stems without an audio file are skipped. */
     fun load(context: Context, stems: List<StemState>) {
         release()
-        Log.d("StemPlayer", "load: " + stems.joinToString { "${it.name}(${it.audioFile?.name})" })
         for (stem in stems) {
             val file = stem.audioFile ?: continue
             val player = MediaPlayer.create(context, Uri.fromFile(file)) ?: continue
             players[stem.id] = player
-            Log.d("StemPlayer", "playing separately: ${stem.name}")
         }
         // Reset everything when the first stem ends.
         players.values.firstOrNull()?.setOnCompletionListener {
