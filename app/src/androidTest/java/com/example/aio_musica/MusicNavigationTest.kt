@@ -4,10 +4,14 @@ import android.view.View
 import android.widget.Button
 import android.widget.SeekBar
 import android.widget.Spinner
+import android.widget.TextView
 import androidx.lifecycle.ViewModelProvider
 import com.example.aio_musica.ui.StemMixerViewModel
 import androidx.test.ext.junit.rules.ActivityScenarioRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.espresso.Espresso.onView
+import androidx.test.espresso.action.ViewActions.click
+import androidx.test.espresso.matcher.ViewMatchers.withId
 import com.example.aio_musica.ui.MusicScreen
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.tabs.TabLayout
@@ -290,6 +294,131 @@ class MusicNavigationTest {
 
             // No song should remain selected after cleanup.
             assertNull(mixerViewModel.currentSong.value)
+        }
+    }
+
+
+    /**
+     * Verifies that opening Mixer pauses an actively playing song.
+     *
+     * Tests the interaction between Original playback and
+     * the Mixer tab without starting audio separation.
+     *
+     * Requires one playable song in the Library.
+     */
+    @Test
+    fun switchingToMixerPausesPlayback() {
+        activityRule.scenario.onActivity { activity ->
+
+            val navigation =
+                activity.findViewById<BottomNavigationView>(
+                    R.id.bottomNavigation
+                )
+
+            // Open the Original Music Player.
+            navigation.selectedItemId = R.id.nav_music
+            activity.supportFragmentManager.executePendingTransactions()
+
+            val playPause =
+                activity.findViewById<Button>(R.id.playPauseButton)
+
+            val tabs =
+                activity.findViewById<TabLayout>(R.id.musicTabs)
+
+            // Confirm that a playable song is available.
+            assertTrue(
+                "Import a playable MP3 before running this test.",
+                playPause.isEnabled
+            )
+
+            // Start playing the selected song.
+            playPause.performClick()
+
+            assertEquals(
+                activity.getString(R.string.player_pause),
+                playPause.text.toString()
+            )
+
+            // Opening Mixer should automatically pause playback.
+            tabs.getTabAt(1)!!.select()
+
+            assertEquals(
+                activity.getString(R.string.player_play),
+                playPause.text.toString()
+            )
+
+            // Returning to Original should not resume automatically.
+            tabs.getTabAt(0)!!.select()
+
+            assertEquals(
+                activity.getString(R.string.player_play),
+                playPause.text.toString()
+            )
+        }
+    }
+
+    /**
+     * Verifies that the Original Music Player supports seeking.
+     *
+     * Selects an imported song and simulates a user tapping
+     * the middle of the playback progress bar.
+     *
+     * Expected behavior:
+     * - The progress bar is enabled for a loaded song.
+     * - Tapping the bar changes the playback position.
+     * - The elapsed-time display reflects the selected position.
+     *
+     * Requires a playable MP3 in the Library.
+     */
+    @Test
+    fun seekingUpdatesPlaybackProgress() {
+        activityRule.scenario.onActivity { activity ->
+
+            // Hide the startup branding during this test.
+            activity.findViewById<View>(
+                R.id.brandingOverlay
+            ).visibility = View.GONE
+
+            // Open the Original Music Player.
+            val navigation =
+                activity.findViewById<BottomNavigationView>(
+                    R.id.bottomNavigation
+                )
+
+            navigation.selectedItemId = R.id.nav_music
+            activity.supportFragmentManager.executePendingTransactions()
+
+            val progress =
+                activity.findViewById<SeekBar>(R.id.songProgress)
+
+            // Verify a playable song has been loaded.
+            assertTrue(
+                "Import a playable MP3 before running this test.",
+                progress.isEnabled
+            )
+            assertTrue(progress.max > 0)
+        }
+
+        // Simulate a user tapping the middle of the seek bar.
+        onView(withId(R.id.songProgress)).perform(click())
+
+        activityRule.scenario.onActivity { activity ->
+            val progress =
+                activity.findViewById<SeekBar>(R.id.songProgress)
+
+            val elapsed =
+                activity.findViewById<TextView>(R.id.currentTime)
+
+            // Seeking should move playback away from the start.
+            assertTrue(progress.progress > 0)
+            assertTrue(progress.progress < progress.max)
+
+            // Verify the elapsed-time display matches the position.
+            val seconds = progress.progress / 1000
+            val expectedTime =
+                "${seconds / 60}:${(seconds % 60).toString().padStart(2, '0')}"
+
+            assertEquals(expectedTime, elapsed.text.toString())
         }
     }
 

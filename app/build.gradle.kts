@@ -48,7 +48,16 @@ android {
                 enable = false
             }
         }
+
+        debug {
+            // coverage for local JVM unit tests
+            enableUnitTestCoverage = true
+
+            // coverage for android emulator tests
+            enableAndroidTestCoverage = true
+        }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
