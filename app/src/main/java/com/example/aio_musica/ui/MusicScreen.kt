@@ -173,6 +173,7 @@ class MusicScreen : Fragment() {
         previousButton.isEnabled = songs.size > 1
         nextButton.isEnabled = songs.size > 1
         playPauseButton.isEnabled = false
+        songProgress.isEnabled = false
 
         // Prepare the selected song without automatically playing it.
         songPicker.onItemSelectedListener =
